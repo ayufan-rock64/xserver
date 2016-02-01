@@ -29,6 +29,7 @@
 
 #include "dix-config.h"
 
+#define GLAMOR_GLES2
 #define GLAMOR_FOR_XORG
 #include <unistd.h>
 #include <fcntl.h>
@@ -233,7 +234,7 @@ glamor_egl_create_textured_pixmap_from_gbm_bo(PixmapPtr pixmap,
     glamor_make_current(glamor_priv);
 
     image = eglCreateImageKHR(glamor_egl->display,
-                              glamor_egl->context,
+                              /* glamor_egl->context*/ EGL_NO_CONTEXT,
                               EGL_NATIVE_PIXMAP_KHR, bo, NULL);
     if (image == EGL_NO_IMAGE_KHR) {
         glamor_set_pixmap_type(pixmap, GLAMOR_DRM_ONLY);
@@ -894,6 +895,38 @@ glamor_egl_init(ScrnInfoPtr scrn, int fd)
     struct glamor_egl_screen_private *glamor_egl;
     const GLubyte *renderer;
 
+    EGLint config_attribs[] = {
+#ifdef GLAMOR_GLES2
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+#endif
+        EGL_NONE
+    };
+    static const EGLint config_attribs_core[] = {
+        EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR,
+        EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR,
+        EGL_CONTEXT_MAJOR_VERSION_KHR,
+        GLAMOR_GL_CORE_VER_MAJOR,
+        EGL_CONTEXT_MINOR_VERSION_KHR,
+        GLAMOR_GL_CORE_VER_MINOR,
+        EGL_NONE
+    };
+
+    const EGLint config_attribs_gles2[] = {
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, 24,
+        EGL_STENCIL_SIZE, 8,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+	    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+	    EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+        EGL_NONE
+    };
+    EGLint num_configs;
+    EGLConfig egl_config;
+
+    glamor_identify(0);
     glamor_egl = calloc(sizeof(*glamor_egl), 1);
     if (glamor_egl == NULL)
         return FALSE;
@@ -934,50 +967,35 @@ glamor_egl_init(ScrnInfoPtr scrn, int fd)
 		goto error;  \
 	}
 
-    GLAMOR_CHECK_EGL_EXTENSION(KHR_surfaceless_context);
+    GLAMOR_CHECK_EGL_EXTENSION(KHR_gl_renderbuffer_image);
+#ifdef GLAMOR_GLES2
+    GLAMOR_CHECK_EGL_EXTENSIONS(KHR_surfaceless_context, KHR_surfaceless_gles2);
+#else
+    GLAMOR_CHECK_EGL_EXTENSIONS(KHR_surfaceless_context,
+                                KHR_surfaceless_opengl);
+#endif
 
-    if (eglBindAPI(EGL_OPENGL_API)) {
-        static const EGLint config_attribs_core[] = {
-            EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR,
-            EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR,
-            EGL_CONTEXT_MAJOR_VERSION_KHR,
-            GLAMOR_GL_CORE_VER_MAJOR,
-            EGL_CONTEXT_MINOR_VERSION_KHR,
-            GLAMOR_GL_CORE_VER_MINOR,
-            EGL_NONE
-        };
-        static const EGLint config_attribs[] = {
-            EGL_NONE
-        };
-
-        glamor_egl->context = eglCreateContext(glamor_egl->display,
-                                               NULL, EGL_NO_CONTEXT,
-                                               config_attribs_core);
-
-        if (glamor_egl->context == EGL_NO_CONTEXT)
-            glamor_egl->context = eglCreateContext(glamor_egl->display,
-                                                   NULL, EGL_NO_CONTEXT,
-                                                   config_attribs);
+#ifndef GLAMOR_GLES2
+    glamor_egl->context = eglCreateContext(glamor_egl->display,
+                                           NULL, EGL_NO_CONTEXT,
+                                           config_attribs_core);
+#else
+    glamor_egl->context = NULL;
+#endif
+    if (!eglChooseConfig(glamor_egl->display, config_attribs_gles2, 0, 0, &num_configs)) {
+        ErrorF("eglChooseConfig Fail to get Confings\n");
+        return false;
     }
 
-    if (glamor_egl->context == EGL_NO_CONTEXT) {
-        static const EGLint config_attribs[] = {
-            EGL_CONTEXT_CLIENT_VERSION, 2,
-            EGL_NONE
-        };
-        if (!eglBindAPI(EGL_OPENGL_ES_API)) {
-            xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-                       "glamor: Failed to bind either GL or GLES APIs.\n");
-            goto error;
-        }
-
-        glamor_egl->context = eglCreateContext(glamor_egl->display,
-                                               NULL, EGL_NO_CONTEXT,
-                                               config_attribs);
+    if (!eglChooseConfig(glamor_egl->display, config_attribs_gles2, &egl_config, 1, &num_configs)) {
+        ErrorF("Fail to get Config, num_configs=%d\n",num_configs);
+        return false;
     }
+    glamor_egl->context = eglCreateContext(glamor_egl->display,
+                                           egl_config, EGL_NO_CONTEXT,
+                                           config_attribs);
     if (glamor_egl->context == EGL_NO_CONTEXT) {
-        xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-                   "glamor: Failed to create GL or GLES2 contexts\n");
+        xf86DrvMsg(scrn->scrnIndex, X_ERROR, "Failed to create EGL context\n");
         goto error;
     }
 
