@@ -620,6 +620,8 @@ gl_iformat_for_pixmap(PixmapPtr pixmap)
     } else if (glamor_priv->gl_flavor == GLAMOR_GL_DESKTOP &&
                (pixmap)->drawable.depth == 30) {
         return GL_RGB10_A2;
+    } else if (((pixmap)->drawable.depth == 1 || (pixmap)->drawable.depth == 8)) {
+        return GL_ALPHA;
     } else {
         return GL_RGBA;
     }
