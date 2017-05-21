@@ -834,11 +834,6 @@ ms_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
     uint64_t current_msc, current_ust;
     uint64_t request_msc;
     uint32_t seq;
-    ms_queue_flag ms_flag = MS_QUEUE_ABSOLUTE;
-    uint64_t queued_msc;
-
-    if (!ms->drmmode.dri2_vsync)
-        goto blit_fallback;
     
     /* Drawable not displayed... just complete the swap */
     if (!crtc)
@@ -875,6 +870,8 @@ ms_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
     if (can_flip(scrn, draw, front, back)) {
         frame_info->type = MS_DRI2_QUEUE_FLIP;
         flip = 1;
+    } else if (!ms->drmmode.dri2_vsync) {
+        goto blit_fallback;
     }
 
     /* Correct target_msc by 'flip' if frame_info->type == MS_DRI2_QUEUE_FLIP.
