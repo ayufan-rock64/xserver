@@ -941,12 +941,14 @@ glamor_egl_init(ScrnInfoPtr scrn, int fd)
         goto error;
     }
 
-    glamor_egl->display = glamor_egl_get_display(EGL_PLATFORM_GBM_MESA,
-                                                 glamor_egl->gbm);
+    glamor_egl->display = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, glamor_egl->gbm, NULL);
+
     if (!glamor_egl->display) {
         xf86DrvMsg(scrn->scrnIndex, X_ERROR, "eglGetDisplay() failed\n");
         goto error;
     }
+
+    glamor_egl->has_gem = glamor_egl_check_has_gem(fd);
 
     if (!eglInitialize(glamor_egl->display, NULL, NULL)) {
         xf86DrvMsg(scrn->scrnIndex, X_ERROR, "eglInitialize() failed\n");
