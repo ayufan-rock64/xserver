@@ -428,6 +428,7 @@ glamor_copy_fbo_fbo_draw(DrawablePtr src,
     ret = TRUE;
 
 bail_ctx:
+    glamor_flush();
     glDisable(GL_SCISSOR_TEST);
     glDisableVertexAttribArray(GLAMOR_VERTEX_POS);
 
