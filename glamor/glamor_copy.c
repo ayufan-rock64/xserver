@@ -482,8 +482,6 @@ bail_ctx:
     if (src_pixmap == dst_pixmap && glamor_priv->has_mesa_tile_raster_order) {
         glDisable(GL_TILE_RASTER_ORDER_FIXED_MESA);
     }
-    glamor_flush();
-    glDisable(GL_SCISSOR_TEST);
     glDisableVertexAttribArray(GLAMOR_VERTEX_POS);
 
     return ret;
