@@ -1,7 +1,8 @@
 Source: xorg-server
 Section: x11
 Priority: optional
-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
+Maintainer: Kamil Trzcinski <ayufan@ayufan.eu>
+XSBC-Original-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Build-Depends:
  debhelper (>= 9),
  dh-autoreconf,
@@ -12,6 +13,7 @@ Build-Depends:
  pkg-config,
  bison,
  flex,
+ xauth,
  xutils-dev (>= 1:7.6+4),
  xfonts-utils (>= 1:7.5+1),
  x11proto-bigreqs-dev (>= 1:1.1.0),
@@ -96,11 +98,15 @@ Build-Depends:
  libbsd-dev,
 # xwayland
  libwayland-dev [linux-any],
- wayland-protocols (>= 1.1) [linux-any],
+ wayland-protocols (>= 1.9) [linux-any],
 #logind
   libdbus-1-dev (>= 1.0) [linux-any],
 # systemd-daemon
   libsystemd-dev [linux-any],
+  libgcrypt20-dev,
+# XMir
+ libmirclient-dev (>= 0.13.1) [!powerpc !ppc64el !s390x],
+ mir-client-platform-mesa-dev,
 Standards-Version: 3.9.8
 Vcs-Git: https://anonscm.debian.org/git/pkg-xorg/xserver/xorg-server.git
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-xorg/xserver/xorg-server.git
@@ -146,6 +152,26 @@ Description: Xorg X server - core server
  .
  This package is built from the X.org xserver module.
 
+Package: xserver-xorg-core-udeb
+XC-Package-Type: udeb
+Section: debian-installer
+# exclude sparc because of linker errors
+Architecture: any
+Depends:
+# merged: xserver-common (>= ${source:Version}),
+ xkb-data-udeb,
+ x11-xkb-utils-udeb,
+# disabled: keyboard-configuration [linux-any kfreebsd-any],
+ udev-udeb (>= 149) [linux-any],
+ devd-udeb [kfreebsd-any],
+ ${shlibs:Depends},
+ ${misc:Depends},
+Provides:
+ ${videoabi},
+ ${inputabi},
+Description: Xorg X server - core server
+ This is a udeb, or a microdeb, for the debian-installer.
+
 Package: xserver-xorg-dev
 Architecture: any
 Depends:
@@ -171,6 +197,8 @@ Depends:
  libxkbfile-dev,
  libpciaccess-dev,
  mesa-common-dev,
+ libmirclient-dev [!powerpc !ppc64el],
+ mir-client-platform-mesa-dev,
  ${misc:Depends},
 Description: Xorg X server - development files
  This package provides development files for the X.Org ('Xorg') X server.
@@ -250,7 +278,10 @@ Depends:
  xserver-common (>= ${source:Version}),
  ${shlibs:Depends},
  ${misc:Depends},
-Recommends: xauth
+ xauth,
+ x11-xkb-utils
+Recommends:
+ libgl1-mesa-dri
 Provides: xserver
 Multi-Arch: foreign
 Description: Virtual Framebuffer 'fake' X server
@@ -308,6 +339,26 @@ Replaces: xserver-xorg-core (<< 2:1.5.2)
 Description: common files used by various X servers
  This package provides files necessary for all X.Org based X servers.
 
+Package: xmir
+Architecture: amd64 arm64 armhf i386
+Depends:
+ xserver-common (>= ${source:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Xmir X server
+ This package provides an X server running on top of Mir, using Mir
+ input devices for input and forwarding either the root window or individual
+ top-level windows as wayland surfaces.
+
+Package: xserver-xorg-xmir
+Architecture: all
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         xmir,
+Description: Xmir X server (transitional package)
+ This is a transitional package to ease upgrades to xmir.
+ It can be safely removed.
+
 Package: xorg-server-source
 Architecture: all
 Depends:
@@ -321,6 +372,17 @@ Description: Xorg X server - source files
  .
  Unless you are building a software product using X server sources,
  you probably want xserver-xorg and/or xserver-xorg-core instead.
+
+Package: xwayland
+Architecture: linux-any
+Depends:
+ xserver-common (>= ${source:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Xwayland X server
+ This package provides an X server running on top of wayland, using wayland
+ input devices for input and forwarding either the root window or individual
+ top-level windows as wayland surfaces.
 
 Package: xserver-xorg-legacy
 Architecture: any
