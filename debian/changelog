@@ -1,3 +1,9 @@
+xorg-server (2:1.18.4-1ayufan2) xenial; urgency=medium
+
+  * Bump version
+
+ -- Kamil Trzcinski <ayufan@ayufan.eu>  Wed, 14 Jun 2017 12:16:37 +0000
+
 xorg-server (2:1.18.4-1) testing; urgency=medium
 
   [ Jacob Chen ]
