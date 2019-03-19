@@ -1,3 +1,9 @@
+xorg-server (2:1.19.6-1ubuntu5ayufan10) testing; urgency=medium
+
+  * Merge the xorg-server-1.19.6
+
+ -- Kamil Trzciński <ayufan@ayufan.eu>  Tue, 19 Mar 2019 08:59:14 +0100
+
 xorg-server (2:1.19.5-0ubuntu2ayufan2) testing; urgency=medium
 
   * Rebase Rockchip's patches
