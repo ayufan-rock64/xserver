@@ -1,3 +1,10 @@
+xorg-server (2:1.19.6-1ubuntu5ayufan13) testing; urgency=medium
+
+  * Revert 518b5457d0c1d5ac082290dd79c969a32b969471 as it breaks
+    software compositing of fullscreen apps
+
+ -- Kamil Trzciński <ayufan@ayufan.eu>  Sat, 30 Mar 2019 23:42:46 +0100
+
 xorg-server (2:1.19.6-1ubuntu5ayufan12) testing; urgency=medium
 
   * Add the https://github.com/rockchip-linux/xserver/pull/10
