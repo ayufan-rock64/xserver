@@ -413,25 +413,37 @@ glamor_debug_output_callback(GLenum source,
 static void
 glamor_setup_debug_output(ScreenPtr screen)
 {
-    if (!epoxy_has_gl_extension("GL_ARB_debug_output"))
+    if (!getenv("GLAMOR_GL_DEBUG")) {
         return;
+    }
 
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    /* Disable debugging messages other than GL API errors */
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
-                          GL_FALSE);
-    glDebugMessageControl(GL_DEBUG_SOURCE_API,
-                          GL_DEBUG_TYPE_ERROR,
-                          GL_DONT_CARE,
-                          0, NULL, GL_TRUE);
-    glDebugMessageCallback(glamor_debug_output_callback,
-                           screen);
+    if (epoxy_has_gl_extension("GL_ARB_debug_output")) {
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
+                            GL_FALSE);
+        glDebugMessageControl(GL_DEBUG_SOURCE_API,
+                            GL_DEBUG_TYPE_ERROR,
+                            GL_DONT_CARE,
+                            0, NULL, GL_TRUE);
+        glDebugMessageCallback(glamor_debug_output_callback,
+                            screen);
+    }
 
     /* If KHR_debug is present, all debug output is disabled by
      * default on non-debug contexts.
      */
-    if (epoxy_has_gl_extension("GL_KHR_debug"))
+    if (epoxy_has_gl_extension("GL_KHR_debug")) {
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageControlKHR(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
+                            GL_FALSE);
+        glDebugMessageControlKHR(GL_DEBUG_SOURCE_API,
+                            GL_DEBUG_TYPE_ERROR,
+                            GL_DONT_CARE,
+                            0, NULL, GL_TRUE);
+        glDebugMessageCallbackKHR(glamor_debug_output_callback,
+                            screen);
         glEnable(GL_DEBUG_OUTPUT);
+    }
 }
 
 /** Set up glamor for an already-configured GL context. */
