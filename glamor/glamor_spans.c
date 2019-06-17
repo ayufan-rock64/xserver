@@ -176,6 +176,10 @@ glamor_fill_spans(DrawablePtr drawable,
     glamor_fill_spans_bail(drawable, gc, n, points, widths, sorted);
 }
 
+
+void fixed_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+    GLenum format, GLenum type, uint8_t * data, glamor_screen_private *glamor_priv);
+
 static Bool
 glamor_get_spans_gl(DrawablePtr drawable, int wmax,
                     DDXPointPtr points, int *widths, int count, char *dst)
@@ -234,7 +238,7 @@ glamor_get_spans_gl(DrawablePtr drawable, int wmax,
             if (y >= box->y2)
                 continue;
 
-            glReadPixels(x1 - box->x1, y - box->y1, x2 - x1, 1, format, type, l);
+            fixed_glReadPixels(x1 - box->x1, y - box->y1, x2 - x1, 1, format, type, l, glamor_priv);
         }
     }
 

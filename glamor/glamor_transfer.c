@@ -154,6 +154,27 @@ glamor_upload_pixmap(PixmapPtr pixmap)
                         pixmap->devPrivate.ptr, pixmap->devKind);
 }
 
+void fixed_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+    GLenum format, GLenum type, uint8_t * data, glamor_screen_private *glamor_priv)
+{
+    GLenum internalformat = format;
+    if (format == GL_BGRA && type == GL_UNSIGNED_BYTE && !glamor_priv->has_texture_swizzle) {
+        internalformat = GL_RGBA;
+    }
+
+    glReadPixels(x, y, width, height, internalformat, type, data);
+
+    if (internalformat != format) {
+        uint8_t *ptr = data;
+        uint8_t *endptr = ptr + width * height * 4;
+
+        for (; ptr < endptr; ptr += 4) {
+            uint32_t *rgba = (uint32_t*)ptr;
+            *rgba = (*rgba & 0xFF00FF00) | ((*rgba & 0xFF) << 16) | ((*rgba >> 16) & 0xFF);
+        }
+    }
+}
+
 /*
  * Read stuff from the pixmap FBOs and write to memory
  */
@@ -206,10 +227,11 @@ glamor_download_boxes(PixmapPtr pixmap, BoxPtr in_boxes, int in_nbox,
 
             if (glamor_priv->has_pack_subimage ||
                 x2 - x1 == byte_stride / bytes_per_pixel) {
-                glReadPixels(x1 - box->x1, y1 - box->y1, x2 - x1, y2 - y1, format, type, bits + ofs);
+                fixed_glReadPixels(x1 - box->x1, y1 - box->y1, x2 - x1, y2 - y1, format, type, bits + ofs, glamor_priv);
             } else {
-                for (; y1 < y2; y1++, ofs += byte_stride)
-                    glReadPixels(x1 - box->x1, y1 - box->y1, x2 - x1, 1, format, type, bits + ofs);
+                for (; y1 < y2; y1++, ofs += byte_stride) {
+                    fixed_glReadPixels(x1 - box->x1, y1 - box->y1, x2 - x1, 1, format, type, bits + ofs, glamor_priv);
+                }
             }
         }
     }
