@@ -1,3 +1,9 @@
+xorg-server (2:1.19.6-1ubuntu5ayufan16) testing; urgency=medium
+
+  * Force rebuild
+
+ -- Kamil Trzciński <ayufan@ayufan.eu>  Tue, 16 Jul 2019 18:28:35 +0200
+
 xorg-server (2:1.19.6-1ubuntu5ayufan15) testing; urgency=medium
 
   * Fix some rending bugs on Mali 450, still `upload_boxes` does not work for gbm
